@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -140,3 +141,14 @@ st.pyplot(fig4)
 # -------------------------------
 st.markdown("---")
 st.caption("📊 Job Acceptance Dashboard | Streamlit + Matplotlib (No pyarrow)")
+=======
+import streamlit as st
+import pandas as pd
+
+st.title("🎯 Job Acceptance Prediction Dashboard")
+
+df = pd.read_csv("data/processed/job_acceptance_clean.csv")
+
+st.metric("Total Candidates", len(df))
+st.metric("Job Acceptance Rate (%)", round(df["placement_status"].mean()*100, 2))
+>>>>>>> 4a72a78348968a5fc2040d881e72091356356487
