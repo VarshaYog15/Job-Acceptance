@@ -1,0 +1,9 @@
+venv/
+__pycache__/
+*.pyc
+*.pkl
+*.csv
+artifacts/
+eda_outputs/
+evaluation_outputs/
+*.txt
