@@ -1,0 +1,6 @@
+MODEL PERFORMANCE
+-----------------
+Accuracy : 0.8644
+Precision: 0.7925
+Recall   : 0.7393
+F1 Score : 0.7650

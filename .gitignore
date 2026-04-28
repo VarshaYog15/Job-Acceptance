@@ -6,4 +6,3 @@ __pycache__/
 artifacts/
 eda_outputs/
 evaluation_outputs/
-*.txt
