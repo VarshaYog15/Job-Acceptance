@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 import joblib
@@ -80,7 +80,7 @@ def main():
 
 if __name__ == "__main__":
     main()
-=======
+
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 import joblib
@@ -162,4 +162,4 @@ def main():
 
 if __name__ == "__main__":
     main()
->>>>>>> 4a72a78348968a5fc2040d881e72091356356487
+

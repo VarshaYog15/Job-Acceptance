@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 import pandas as pd
 import numpy as np
 import os
@@ -523,7 +523,7 @@ if __name__ == "__main__":
     bias_analysis(df)
 
     print("✅ ALL ANALYSIS COMPLETED → Check eda_outputs folder")
-=======
+
 """
 EDA MODULE – Job Acceptance Project
 ----------------------------------
@@ -695,4 +695,4 @@ if __name__ == "__main__":
 
     print("📊 Running EDA...\n")
     run_eda(df)
->>>>>>> 4a72a78348968a5fc2040d881e72091356356487
+

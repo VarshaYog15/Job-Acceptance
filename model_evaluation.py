@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -106,7 +106,7 @@ def main():
 
 if __name__ == "__main__":
     main()
-=======
+
 import os
 import joblib
 from sklearn.ensemble import RandomForestClassifier
@@ -187,4 +187,4 @@ def main():
 
 if __name__ == "__main__":
     main()
->>>>>>> 4a72a78348968a5fc2040d881e72091356356487
+

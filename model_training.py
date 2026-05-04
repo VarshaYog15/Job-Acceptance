@@ -1,11 +1,3 @@
-<<<<<<< HEAD
-"""
-MODEL TRAINING - Job Acceptance Project
---------------------------------------
-✔ Train model
-✔ Evaluate performance
-✔ Save predictions & metrics
-"""
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -123,7 +115,7 @@ print("💾 Metrics saved → model_metrics.txt")
 
 
 print("\n🎉 MODEL TRAINING COMPLETED")
-=======
+
 # ---------------------------------------------
 # STEP 7: MACHINE LEARNING MODELING
 # JOB ACCEPTANCE PREDICTION
@@ -241,4 +233,4 @@ accepted_rate = y_pred.mean() * 100
 print(f"\n📌 Predicted Job Acceptance Rate: {accepted_rate:.2f}%")
 
 print("🔹 Model Training Finished Successfully")
->>>>>>> 4a72a78348968a5fc2040d881e72091356356487
+

@@ -1,9 +1,4 @@
-"""
-Feature Engineering Module
---------------------------
-Creates derived analytical features and saves the output
-as a CSV file named `features.csv`.
-"""
+
 
 import os
 

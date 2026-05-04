@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 import pandas as pd
 
 
@@ -149,7 +149,7 @@ while True:
         counter += 1
 
 print(f"💾 Saved to: {file_path}")
-=======
+
 import pandas as pd
 
 
@@ -286,4 +286,4 @@ if __name__ == "__main__":
 
     df_features.to_csv(OUTPUT_PATH, index=False)
     print(f"✅ Feature-engineered data saved to:\n{OUTPUT_PATH}")
->>>>>>> 4a72a78348968a5fc2040d881e72091356356487
+

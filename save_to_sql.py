@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 import pandas as pd
 from sqlalchemy import create_engine, text
 from urllib.parse import quote_plus
@@ -28,7 +28,7 @@ df.to_sql(
 )
 
 print("✅ Table job_acceptance created successfully")
-=======
+
 import pandas as pd
 from sqlalchemy import create_engine, text
 from urllib.parse import quote_plus
@@ -58,4 +58,4 @@ df.to_sql(
 )
 
 print("✅ Table job_acceptance created successfully")
->>>>>>> 4a72a78348968a5fc2040d881e72091356356487
+
