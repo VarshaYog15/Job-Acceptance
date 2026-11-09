@@ -1,0 +1,8 @@
+JOB ACCEPTANCE PREDICTION MODEL
+========================================
+
+Accuracy : 0.8907
+Precision: 0.8299
+Recall   : 0.8036
+F1 Score : 0.8165
+ROC-AUC  : 0.9556

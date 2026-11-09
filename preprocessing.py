@@ -1,165 +1,293 @@
-
-import pandas as pd
-from sklearn.preprocessing import StandardScaler
-import joblib
 import os
+import joblib
+import pandas as pd
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.compose import ColumnTransformer
+
+from config import (
+    FEATURE_DATA_PATH,
+    ARTIFACTS_DIR,
+    FEATURE_NAMES_PATH,
+    TARGET_COLUMN,
+    TARGET_MAPPING,
+    TEST_SIZE,
+    RANDOM_STATE
+)
 
 
-def preprocess_data(df, target_col):
-    # Split features and target
-    X = df.drop(columns=[target_col])
-    y = df[target_col]
+def preprocess_data(df):
+    """
+    Preprocess the feature-engineered dataset.
 
-    # One-hot encoding
-    X_encoded = pd.get_dummies(X, drop_first=True)
+    Steps:
+    1. Separate target variable
+    2. Convert target labels to 0/1
+    3. Split into training and testing sets
+    4. Identify numerical and categorical columns
+    5. Fit preprocessing only on training data
+    6. Transform training and testing data
+    """
 
-    # Scaling
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X_encoded)
+    print("\n🔧 PREPROCESSING STARTED")
 
-    return X_scaled, y, scaler, X_encoded.columns
+    df = df.copy()
+
+    # --------------------------------------------------
+    # 1. Check target column
+    # --------------------------------------------------
+    if TARGET_COLUMN not in df.columns:
+        raise ValueError(
+            f"Target column '{TARGET_COLUMN}' was not found in the dataset."
+        )
+
+    # --------------------------------------------------
+    # 2. Separate features and target
+    # --------------------------------------------------
+    X = df.drop(columns=[TARGET_COLUMN])
+    y = df[TARGET_COLUMN].copy()
+
+    print("\n🎯 Target column:", TARGET_COLUMN)
+
+    # --------------------------------------------------
+    # 3. Convert target to numeric
+    # --------------------------------------------------
+    if y.dtype == "object":
+        y = (
+            y.astype(str)
+            .str.strip()
+            .str.lower()
+            .map({
+                "placed": TARGET_MAPPING["Placed"],
+                "not placed": TARGET_MAPPING["Not Placed"],
+                "not_placed": TARGET_MAPPING["Not Placed"]
+            })
+        )
+
+    if y.isnull().any():
+        raise ValueError(
+            "Target column contains values that could not be converted "
+            "to 0/1. Check the status labels."
+        )
+
+    y = y.astype(int)
+
+    print("\n📊 Target Distribution:")
+    print(y.value_counts().sort_index())
+
+    # --------------------------------------------------
+    # 4. Train-Test Split
+    # --------------------------------------------------
+    X_train, X_test, y_train, y_test = train_test_split(
+        X,
+        y,
+        test_size=TEST_SIZE,
+        random_state=RANDOM_STATE,
+        stratify=y
+    )
+
+    print("\n✂️ Train-Test Split Completed")
+    print("Training samples:", X_train.shape[0])
+    print("Testing samples :", X_test.shape)
+
+    # --------------------------------------------------
+    # 5. Identify numerical and categorical columns
+    # --------------------------------------------------
+    numerical_columns = X_train.select_dtypes(
+        include=["int64", "float64", "int32", "float32"]
+    ).columns.tolist()
+
+    categorical_columns = X_train.select_dtypes(
+        include=["object", "category", "bool"]
+    ).columns.tolist()
+
+    print("\n🔢 Numerical Features:")
+    print(numerical_columns)
+
+    print("\n🔤 Categorical Features:")
+    print(categorical_columns)
+
+    # --------------------------------------------------
+    # 6. Create preprocessing pipeline
+    # --------------------------------------------------
+    transformers = []
+
+    if numerical_columns:
+        transformers.append(
+            (
+                "numerical",
+                StandardScaler(),
+                numerical_columns
+            )
+        )
+
+    if categorical_columns:
+        transformers.append(
+            (
+                "categorical",
+                OneHotEncoder(
+                    handle_unknown="ignore",
+                    drop="first",
+                    sparse_output=False
+                ),
+                categorical_columns
+            )
+        )
+
+    preprocessor = ColumnTransformer(
+        transformers=transformers,
+        remainder="drop"
+    )
+
+    # --------------------------------------------------
+    # 7. FIT ONLY ON TRAINING DATA
+    # --------------------------------------------------
+    print("\n⚙️ Fitting preprocessing on training data...")
+
+    X_train_processed = preprocessor.fit_transform(X_train)
+
+    # --------------------------------------------------
+    # 8. Transform test data
+    # --------------------------------------------------
+    X_test_processed = preprocessor.transform(X_test)
+
+    # Convert to DataFrame
+    X_train_processed = pd.DataFrame(
+        X_train_processed,
+        columns=preprocessor.get_feature_names_out(),
+        index=X_train.index
+    )
+
+    X_test_processed = pd.DataFrame(
+        X_test_processed,
+        columns=preprocessor.get_feature_names_out(),
+        index=X_test.index
+    )
+
+    feature_names = X_train_processed.columns.tolist()
+
+    print("\n✅ Preprocessing Completed")
+    print("Processed training shape:", X_train_processed.shape)
+    print("Processed testing shape :", X_test_processed.shape)
+    print("Total processed features:", len(feature_names))
+
+    return (
+        X_train_processed,
+        X_test_processed,
+        y_train,
+        y_test,
+        preprocessor,
+        feature_names
+    )
 
 
 def main():
-    # ---------------------------
-    # CONFIG
-    # ---------------------------
-    DATA_PATH = r"C:/Users/2SIN/Documents/Python/venv/Job_Acceptance/job_acceptance_features.csv"
-    TARGET_COL = "status"
 
-    OUTPUT_DIR = r"C:/Users/2SIN/Documents/Python/venv/Job_Acceptance/artifacts"
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    print("=" * 60)
+    print("🚀 PREPROCESSING SCRIPT STARTED")
+    print("=" * 60)
 
-    # ---------------------------
-    # FETCH DATA
-    # ---------------------------
-    print("📥 Fetching data...")
-    df = pd.read_csv(DATA_PATH)
+    # --------------------------------------------------
+    # 1. Load feature-engineered data
+    # --------------------------------------------------
+    print("\n📥 Loading feature-engineered data...")
 
-    # ---------------------------
-    # PREPROCESS DATA
-    # ---------------------------
-    print("⚙️ Preprocessing data...")
-    X_scaled, y, scaler, feature_names = preprocess_data(df, TARGET_COL)
+    if not os.path.exists(FEATURE_DATA_PATH):
+        raise FileNotFoundError(
+            f"Feature-engineered dataset not found:\n"
+            f"{FEATURE_DATA_PATH}\n\n"
+            f"Please run feature_engineering.py first."
+        )
 
-    # ---------------------------
-    # SAVE OUTPUTS (PKL FILES)
-    # ---------------------------
-    joblib.dump(X_scaled, os.path.join(OUTPUT_DIR, "X_processed.pkl"))
-    joblib.dump(y, os.path.join(OUTPUT_DIR, "y.pkl"))
-    joblib.dump(scaler, os.path.join(OUTPUT_DIR, "scaler.pkl"))
-    joblib.dump(feature_names, os.path.join(OUTPUT_DIR, "feature_names.pkl"))
+    df = pd.read_csv(FEATURE_DATA_PATH)
 
-    print("✅ Outputs saved in:", OUTPUT_DIR)
+    print("✅ Dataset loaded successfully")
+    print("Dataset shape:", df.shape)
 
-    # ---------------------------
-    # DISPLAY PKL CONTENTS
-    # ---------------------------
-    print("\n🔍 Loading PKL files for display...")
+    # --------------------------------------------------
+    # 2. Preprocess
+    # --------------------------------------------------
+    (
+        X_train,
+        X_test,
+        y_train,
+        y_test,
+        preprocessor,
+        feature_names
+    ) = preprocess_data(df)
 
-    X_loaded = joblib.load(os.path.join(OUTPUT_DIR, "X_processed.pkl"))
-    y_loaded = joblib.load(os.path.join(OUTPUT_DIR, "y.pkl"))
-    features_loaded = joblib.load(os.path.join(OUTPUT_DIR, "feature_names.pkl"))
+    # --------------------------------------------------
+    # 3. Save processed datasets
+    # --------------------------------------------------
+    os.makedirs(ARTIFACTS_DIR, exist_ok=True)
 
-    X_df = pd.DataFrame(X_loaded, columns=features_loaded)
+    train_path = os.path.join(
+        ARTIFACTS_DIR,
+        "X_train.pkl"
+    )
 
-    print("\n📊 Feature Matrix (first 5 rows):")
-    print(X_df.head())
+    test_path = os.path.join(
+        ARTIFACTS_DIR,
+        "X_test.pkl"
+    )
 
-    print("\n🎯 Target Values (first 10):")
-    print(y_loaded.head(10))
+    y_train_path = os.path.join(
+        ARTIFACTS_DIR,
+        "y_train.pkl"
+    )
 
-    print("\n📐 Shape Information:")
-    print("X shape:", X_df.shape)
-    print("y shape:", y_loaded.shape)
+    y_test_path = os.path.join(
+        ARTIFACTS_DIR,
+        "y_test.pkl"
+    )
 
-    print("\n🧾 Number of features:", len(features_loaded))
-    print("🧾 First 10 feature names:")
-    print(features_loaded[:10])
+    preprocessor_path = os.path.join(
+        ARTIFACTS_DIR,
+        "preprocessor.pkl"
+    )
+
+    joblib.dump(X_train, train_path)
+    joblib.dump(X_test, test_path)
+    joblib.dump(y_train, y_train_path)
+    joblib.dump(y_test, y_test_path)
+
+    joblib.dump(
+        preprocessor,
+        preprocessor_path
+    )
+
+    joblib.dump(
+        feature_names,
+        FEATURE_NAMES_PATH
+    )
+
+    # --------------------------------------------------
+    # 4. Display results
+    # --------------------------------------------------
+    print("\n💾 Files saved successfully:")
+    print("   ✓", train_path)
+    print("   ✓", test_path)
+    print("   ✓", y_train_path)
+    print("   ✓", y_test_path)
+    print("   ✓", preprocessor_path)
+    print("   ✓", FEATURE_NAMES_PATH)
+
+    print("\n📊 FINAL SHAPES")
+    print("----------------------------")
+    print("X_train:", X_train.shape)
+    print("X_test :", X_test.shape)
+    print("y_train:", y_train.shape)
+    print("y_test :", y_test.shape)
+
+    print("\n🧾 First 10 processed features:")
+    for feature in feature_names[:10]:
+        print("   •", feature)
+
+    print("\n" + "=" * 60)
+    print("✅ PREPROCESSING COMPLETED SUCCESSFULLY")
+    print("=" * 60)
 
 
 if __name__ == "__main__":
     main()
-
-import pandas as pd
-from sklearn.preprocessing import StandardScaler
-import joblib
-import os
-
-
-def preprocess_data(df, target_col):
-    # Split features and target
-    X = df.drop(columns=[target_col])
-    y = df[target_col]
-
-    # One-hot encoding
-    X_encoded = pd.get_dummies(X, drop_first=True)
-
-    # Scaling
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X_encoded)
-
-    return X_scaled, y, scaler, X_encoded.columns
-
-
-def main():
-    # ---------------------------
-    # CONFIG
-    # ---------------------------
-    DATA_PATH = r"C:/Users/2SIN/Documents/Python/venv/Job_Acceptance/job_acceptance_features.csv"
-    TARGET_COL = "status"
-
-    OUTPUT_DIR = r"C:/Users/2SIN/Documents/Python/venv/Job_Acceptance/artifacts"
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
-
-    # ---------------------------
-    # FETCH DATA
-    # ---------------------------
-    print("📥 Fetching data...")
-    df = pd.read_csv(DATA_PATH)
-
-    # ---------------------------
-    # PREPROCESS DATA
-    # ---------------------------
-    print("⚙️ Preprocessing data...")
-    X_scaled, y, scaler, feature_names = preprocess_data(df, TARGET_COL)
-
-    # ---------------------------
-    # SAVE OUTPUTS (PKL FILES)
-    # ---------------------------
-    joblib.dump(X_scaled, os.path.join(OUTPUT_DIR, "X_processed.pkl"))
-    joblib.dump(y, os.path.join(OUTPUT_DIR, "y.pkl"))
-    joblib.dump(scaler, os.path.join(OUTPUT_DIR, "scaler.pkl"))
-    joblib.dump(feature_names, os.path.join(OUTPUT_DIR, "feature_names.pkl"))
-
-    print("✅ Outputs saved in:", OUTPUT_DIR)
-
-    # ---------------------------
-    # DISPLAY PKL CONTENTS
-    # ---------------------------
-    print("\n🔍 Loading PKL files for display...")
-
-    X_loaded = joblib.load(os.path.join(OUTPUT_DIR, "X_processed.pkl"))
-    y_loaded = joblib.load(os.path.join(OUTPUT_DIR, "y.pkl"))
-    features_loaded = joblib.load(os.path.join(OUTPUT_DIR, "feature_names.pkl"))
-
-    X_df = pd.DataFrame(X_loaded, columns=features_loaded)
-
-    print("\n📊 Feature Matrix (first 5 rows):")
-    print(X_df.head())
-
-    print("\n🎯 Target Values (first 10):")
-    print(y_loaded.head(10))
-
-    print("\n📐 Shape Information:")
-    print("X shape:", X_df.shape)
-    print("y shape:", y_loaded.shape)
-
-    print("\n🧾 Number of features:", len(features_loaded))
-    print("🧾 First 10 feature names:")
-    print(features_loaded[:10])
-
-
-if __name__ == "__main__":
-    main()
-

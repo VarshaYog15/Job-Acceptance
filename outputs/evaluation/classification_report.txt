@@ -1,0 +1,11 @@
+JOB ACCEPTANCE CLASSIFICATION REPORT
+=============================================
+
+              precision    recall  f1-score   support
+
+  Not Placed       0.92      0.93      0.92      6990
+      Placed       0.83      0.80      0.82      3035
+
+    accuracy                           0.89     10025
+   macro avg       0.87      0.87      0.87     10025
+weighted avg       0.89      0.89      0.89     10025
